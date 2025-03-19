@@ -11,7 +11,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
-  const [language, setLanguage] = useState("en") // "en" for English, "ur" for Urdu
+  const [language, setLanguage] = useState("ur") // "en" for English, "ur" for Urdu
   const pathname = usePathname()
 
   // Only show language toggle on home page
@@ -57,7 +57,7 @@ export default function Navbar() {
     boxShadow: scrolled ? `0 ${4 + scrollProgress * 6}px ${10 + scrollProgress * 10}px rgba(0, 0, 0, 0.05)` : "none",
     // Add a minimum width to prevent the pill from becoming too narrow on mobile
     minWidth: scrolled ? "min(85%, 300px)" : "100%",
-  }
+  } 
 
   const logoContainerWidth = scrolled ? "2px" : "50px"
   const logoScale = 1 + scrollProgress * 0.5

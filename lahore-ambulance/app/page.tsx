@@ -1,7 +1,7 @@
 "use client"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
-import { Phone, MapPin, AlertCircle, ArrowRight } from "lucide-react"
+import { Phone, MapPin, AlertCircle, ArrowRight, User, Users } from "lucide-react"
 import { motion } from "framer-motion"
 
 export default function Home() {
@@ -11,8 +11,13 @@ export default function Home() {
   const [language, setLanguage] = useState("ur") // "en" for English, "ur" for Urdu
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [permissionRetries, setPermissionRetries] = useState(0)
+  const [bookingStep, setBookingStep] = useState("initial") // initial, booking-type, location, complete
+  const [bookingType, setBookingType] = useState("") // "self" or "other"
+  const [isProcessingLocation, setIsProcessingLocation] = useState(false)
+  const [debugInfo, setDebugInfo] = useState("")
+
   const heroRef = useRef(null)
-  const pendingMessageRef = useRef(null)
+  const pendingMessageRef = useRef(false)
   const permissionTimeoutRef = useRef(null)
 
   // Track mouse position for interactive elements
@@ -86,34 +91,57 @@ export default function Home() {
     }
   }
 
-  // Send WhatsApp message with location
-  const sendWhatsAppMessage = (location, city) => {
-    try {
-      // Format the message with RTL markers for Urdu
-      let message = ""
+  // Create message for WhatsApp
+  const createWhatsAppMessage = (location, city, type, lang) => {
+    let message = ""
 
-      if (language === "en") {
+    if (type === "self") {
+      // For self booking, include location details
+      if (lang === "en") {
         message = `Help! I am in ${city}, I need an ambulance!`
+
+        // Add location information
+        const googleMapsLink = `https://maps.google.com/?q=${location.latitude},${location.longitude}`
+        message += `\n\nMy exact location: ${googleMapsLink}`
       } else {
         // Add RTL marker and formatting for Urdu text
         message = `\u200F\u061C${city} میں ہوں، مجھے ایمبولینس کی ضرورت ہے! مدد!`
-      }
 
-      // Add location information
-      const googleMapsLink = `https://maps.google.com/?q=${location.latitude},${location.longitude}`
-
-      if (language === "en") {
-        message += `\n\nMy exact location: ${googleMapsLink}`
-      } else {
-        // Add RTL marker for Urdu location text
+        // Add location information with RTL marker
+        const googleMapsLink = `https://maps.google.com/?q=${location.latitude},${location.longitude}`
         message += `\n\n\u200F\u061Cمیرا مقام: ${googleMapsLink}`
       }
+    } else {
+      // For someone else
+      if (lang === "en") {
+        message = "I need an ambulance for someone else. I will tell you the location on call."
+      } else {
+        // Add RTL marker and formatting for Urdu text
+        message = "\u200F\u061Cمجھے کسی اور کے لیے ایمبولینس کی ضرورت ہے۔ میں آپ کو کال پر مقام بتاؤں گا۔"
+      }
+    }
+
+    return message
+  }
+
+  // Send WhatsApp message with location
+  const sendWhatsAppMessage = (location, city) => {
+    try {
+      console.log("sendWhatsAppMessage called with:", { location, city, bookingType, language })
+      setDebugInfo(
+        `Sending message: type=${bookingType}, lang=${language}, loc=${JSON.stringify(location)}, city=${city}`,
+      )
+
+      // Create the message based on booking type and language
+      const message = createWhatsAppMessage(location, city, bookingType, language)
+      console.log("Message created:", message)
 
       // Format the phone number (remove + if present)
       const phoneNumber = "923185122832" // +923185122832 without the +
 
       // Create the WhatsApp URL with the encoded message
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
+      console.log("WhatsApp URL created:", whatsappUrl)
 
       // Open WhatsApp in a new tab
       window.open(whatsappUrl, "_blank")
@@ -124,10 +152,16 @@ export default function Home() {
       // Reset permission retries
       setPermissionRetries(0)
 
-      // Log success for debugging
+      // Update booking step
+      setBookingStep("complete")
+
+      // Reset processing flag
+      setIsProcessingLocation(false)
+
       console.log("WhatsApp message sent successfully")
     } catch (error) {
       console.error("Error sending WhatsApp message:", error)
+      setIsProcessingLocation(false)
       alert(
         language === "en"
           ? "Error sending message. Please try again or call emergency services directly."
@@ -153,6 +187,8 @@ export default function Home() {
 
   // Request location with robust error handling and permission management
   const requestLocation = () => {
+    console.log("Requesting location...")
+
     // Clear any existing timeout
     if (permissionTimeoutRef.current) {
       clearTimeout(permissionTimeoutRef.current)
@@ -171,6 +207,7 @@ export default function Home() {
       // Success handler
       async (position) => {
         try {
+          console.log("Location obtained successfully:", position.coords)
           const { latitude, longitude } = position.coords
           const locationData = { latitude, longitude }
 
@@ -179,18 +216,24 @@ export default function Home() {
 
           // Get city name from coordinates
           const city = await getCityFromCoordinates(latitude, longitude)
+          console.log("City name obtained:", city)
 
           // Update location status
           setLocationStatus("success")
 
           // If we have a pending message request, send it now
-          if (pendingMessageRef.current) {
+          if (pendingMessageRef.current && bookingType === "self") {
+            console.log("Pending message request found, sending message...")
             sendWhatsAppMessage(locationData, city)
+          } else {
+            console.log("No pending message request found or not self booking.")
+            setIsProcessingLocation(false)
           }
         } catch (error) {
           console.error("Error processing location:", error)
           setLocationStatus("error")
           pendingMessageRef.current = false
+          setIsProcessingLocation(false)
           alert(
             language === "en"
               ? "Error processing your location. Please try again or call emergency services directly."
@@ -228,6 +271,7 @@ export default function Home() {
         // If we've exhausted retries or it's not a permission issue, show the error
         setLocationStatus("error")
         pendingMessageRef.current = false
+        setIsProcessingLocation(false)
 
         // Provide specific error messages based on the error code
         let errorMessage = ""
@@ -275,7 +319,45 @@ export default function Home() {
     )
   }
 
-  const handleEmergencyRequest = async () => {
+  // Handle the initial emergency request button click
+  const handleEmergencyRequest = () => {
+    console.log("Emergency request initiated")
+    // Move to the booking type selection step
+    setBookingStep("booking-type")
+  }
+
+  // Handle booking type selection
+  const handleBookingTypeSelection = (type) => {
+    console.log("Booking type selected:", type)
+    setBookingType(type)
+
+    if (type === "self") {
+      // For self booking, proceed with location request
+      setBookingStep("location")
+      handleLocationRequest()
+    } else {
+      // For booking for someone else, skip location and send message directly
+      console.log("Booking for someone else, skipping location request")
+      pendingMessageRef.current = true
+      // We need to pass dummy location data for the function to work
+      // but it won't be used in the message
+      sendWhatsAppMessage({ latitude: 0, longitude: 0 }, "")
+    }
+  }
+
+  // Handle location request
+  const handleLocationRequest = async () => {
+    console.log("Location request initiated")
+
+    // Prevent multiple simultaneous requests
+    if (isProcessingLocation) {
+      console.log("Already processing location, ignoring request")
+      return
+    }
+
+    // Set processing flag
+    setIsProcessingLocation(true)
+
     // Set loading state immediately for UI feedback
     setLocationStatus("loading")
 
@@ -284,8 +366,10 @@ export default function Home() {
 
     // Check if geolocation is available
     if (!navigator.geolocation) {
+      console.error("Geolocation not supported")
       setLocationStatus("error")
       pendingMessageRef.current = false
+      setIsProcessingLocation(false)
       alert(
         language === "en"
           ? "Geolocation is not supported by this browser. Please use a different device or browser, or call emergency services directly."
@@ -311,15 +395,29 @@ export default function Home() {
 
   // Add a backup mechanism to ensure the message is sent if both location and city are available
   useEffect(() => {
-    // Only proceed if we have a pending message
-    if (!pendingMessageRef.current) return
+    // Only proceed if we have a pending message and we're booking for self
+    if (!pendingMessageRef.current || bookingType !== "self") {
+      return
+    }
 
     // Check if we have both location and city name
     if (userLocation && cityName) {
+      console.log("Location and city name available in useEffect, sending message...")
+      console.log("Location data:", userLocation)
+      console.log("City name:", cityName)
+      console.log("Booking type:", bookingType)
+
       // Send the message
       sendWhatsAppMessage(userLocation, cityName)
+    } else {
+      console.log("Waiting for complete location data. Current state:", {
+        userLocation,
+        cityName,
+        pendingMessage: pendingMessageRef.current,
+        bookingType,
+      })
     }
-  }, [userLocation, cityName])
+  }, [userLocation, cityName, bookingType, language])
 
   // Add a cleanup function to handle component unmounting
   useEffect(() => {
@@ -376,6 +474,22 @@ export default function Home() {
       en: "For life-threatening emergencies, call 1122 directly",
       ur: "زندگی کو خطرہ لاحق ہونے والی ہنگامی صورتحال کے لیے، براہ راست 1122 پر کال کریں",
     },
+    bookingTypeQuestion: {
+      en: "Who needs the ambulance?",
+      ur: "ایمبولینس کس کو درکار ہے؟",
+    },
+    forSelf: {
+      en: "For myself",
+      ur: "میرے لیے",
+    },
+    forOther: {
+      en: "For someone else",
+      ur: "کسی اور کے لیے",
+    },
+    bookingTypeDescription: {
+      en: "This helps us determine if we need your location",
+      ur: "یہ ہمیں یہ طے کرنے میں مدد کرتا ہے کہ آیا ہمیں آپ کے مقام کی ضرورت ہے",
+    },
     services: {
       en: "Our Services",
       ur: "ہماری خدمات",
@@ -404,29 +518,17 @@ export default function Home() {
       en: "Available 24/7 for emergencies",
       ur: "ہنگامی صورتحال کے لیے 24/7 دستیاب",
     },
-    quickStats: {
-      en: "Quick Stats",
-      ur: "فوری اعداد و شمار",
+    requestSent: {
+      en: "Request sent successfully!",
+      ur: "درخواست کامیابی سے بھیج دی گئی!",
     },
-    responseTime: {
-      en: "Average Response Time",
-      ur: "اوسط ردعمل کا وقت",
+    requestSentDesc: {
+      en: "Our team will contact you shortly. For immediate assistance, please call us directly.",
+      ur: "ہماری ٹیم جلد ہی آپ سے رابطہ کرے گی۔ فوری مدد کے لیے، براہ کرم ہمیں براہ راست کال کریں۔",
     },
-    minutes: {
-      en: "minutes",
-      ur: "منٹ",
-    },
-    successRate: {
-      en: "Success Rate",
-      ur: "کامیابی کی شرح",
-    },
-    ambulances: {
-      en: "Ambulances",
-      ur: "ایمبولینس",
-    },
-    inService: {
-      en: "in service",
-      ur: "خدمت میں",
+    tryAgain: {
+      en: "Try Again",
+      ur: "دوبارہ کوشش کریں",
     },
   }
 
@@ -536,16 +638,179 @@ export default function Home() {
     },
   }
 
-  const floatingAnimation = {
-    y: ["-5px", "5px"],
-    transition: {
-      y: {
-        duration: 2,
-        repeat: Number.POSITIVE_INFINITY,
-        repeatType: "reverse",
-        ease: "easeInOut",
-      },
-    },
+  // Render the appropriate form based on the booking step
+  const renderBookingForm = () => {
+    switch (bookingStep) {
+      case "initial":
+        return (
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+          >
+            <Button
+              onClick={handleEmergencyRequest}
+              className="w-full bg-red-600 py-4 md:py-6 lg:py-8 text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group"
+              aria-label="Request emergency ambulance"
+            >
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                {translations.requestAmbulance[language]}
+                <motion.div animate={{ x: [0, 5, 0] }} transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}>
+                  <ArrowRight className="h-5 w-5 md:h-6 md:w-6" />
+                </motion.div>
+              </span>
+              <span className="absolute inset-0 bg-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
+            </Button>
+          </motion.div>
+        )
+
+      case "booking-type":
+        return (
+          <motion.div className="space-y-4 md:space-y-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <h3 className={`text-lg md:text-xl font-bold text-center ${language === "ur" ? "rtl" : ""}`}>
+              {translations.bookingTypeQuestion[language]}
+            </h3>
+            <p className={`text-sm md:text-base text-gray-600 text-center ${language === "ur" ? "rtl" : ""}`}>
+              {translations.bookingTypeDescription[language]}
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  onClick={() => handleBookingTypeSelection("self")}
+                  className="w-full py-6 md:py-8 bg-red-600 hover:bg-red-700 text-white flex flex-col items-center justify-center gap-2 h-auto"
+                >
+                  <User className="h-6 w-6 md:h-8 md:w-8" />
+                  <span className="text-base md:text-lg font-medium text-center">{translations.forSelf[language]}</span>
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button
+                  onClick={() => handleBookingTypeSelection("other")}
+                  className="w-full py-6 md:py-8 bg-red-600 hover:bg-red-700 text-white flex flex-col items-center justify-center gap-2 h-auto"
+                >
+                  <Users className="h-6 w-6 md:h-8 md:w-8" />
+                  <span className="text-base md:text-lg font-medium text-center">
+                    {translations.forOther[language]}
+                  </span>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        )
+
+      case "location":
+        return (
+          <div className="space-y-4 md:space-y-6">
+            {/* Location status indicators */}
+            {locationStatus === "loading" && (
+              <motion.div
+                className={`flex items-center justify-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-amber-600`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                <span className="text-sm md:text-base">{translations.gettingLocation[language]}</span>
+              </motion.div>
+            )}
+
+            {locationStatus === "success" && (
+              <motion.div
+                className={`flex flex-col ${language === "ur" ? "items-end" : "items-start"} text-green-600`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div
+                  className={`flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"}`}
+                >
+                  <MapPin className="h-4 w-4 md:h-5 md:w-5" />
+                  <span className="text-sm md:text-base">{translations.locationSuccess[language]}</span>
+                </div>
+                {cityName && (
+                  <div
+                    className={`mt-1 flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-gray-700`}
+                  >
+                    <span className="text-xs md:text-sm font-medium">{translations.detectedLocation[language]}:</span>
+                    <span className="text-xs md:text-sm">{cityName}</span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {locationStatus === "error" && (
+              <motion.div
+                className={`flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-red-600`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AlertCircle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+                <span className="text-sm md:text-base">{translations.locationError[language]}</span>
+              </motion.div>
+            )}
+
+            {/* Add a retry button for error cases */}
+            {locationStatus === "error" && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
+                <Button
+                  onClick={handleLocationRequest}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white"
+                  disabled={isProcessingLocation}
+                >
+                  {translations.tryAgain[language]}
+                </Button>
+              </motion.div>
+            )}
+
+            {/* Debug info */}
+            {debugInfo && (
+              <div className="mt-2 text-xs text-gray-500 border-t pt-2">
+                <p>Debug: {debugInfo}</p>
+              </div>
+            )}
+          </div>
+        )
+
+      case "complete":
+        return (
+          <motion.div
+            className="space-y-4 md:space-y-6 text-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, damping: 10 }}
+              className="mx-auto bg-green-100 text-green-800 rounded-full p-3 w-16 h-16 flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </motion.div>
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900">{translations.requestSent[language]}</h3>
+            <p className="text-base md:text-lg text-gray-700">{translations.requestSentDesc[language]}</p>
+            <div className="pt-2">
+              <a
+                href="tel:+923369111122"
+                className="inline-flex items-center justify-center gap-2 text-white bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                <Phone className="h-5 w-5" />
+                0336 911 1122
+              </a>
+            </div>
+          </motion.div>
+        )
+
+      default:
+        return null
+    }
   }
 
   // Add a directionality class to the main container based on language
@@ -606,87 +871,18 @@ export default function Home() {
               whileHover={{ boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
             >
               <div className="space-y-4 md:space-y-6">
-                {/* Update the location status indicators for RTL support */}
-                {locationStatus === "loading" && (
-                  <motion.div
-                    className={`flex items-center justify-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-amber-600`}
+                {renderBookingForm()}
+
+                {bookingStep === "initial" && (
+                  <motion.p
+                    className="text-center text-sm md:text-base lg:text-lg text-gray-600"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
                   >
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                    <span className="text-sm md:text-base">{translations.gettingLocation[language]}</span>
-                  </motion.div>
+                    {translations.emergencyCall[language]}
+                  </motion.p>
                 )}
-
-                {locationStatus === "success" && (
-                  <motion.div
-                    className={`flex flex-col ${language === "ur" ? "items-end" : "items-start"} text-green-600`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div
-                      className={`flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"}`}
-                    >
-                      <MapPin className="h-4 w-4 md:h-5 md:w-5" />
-                      <span className="text-sm md:text-base">{translations.locationSuccess[language]}</span>
-                    </div>
-                    {cityName && (
-                      <div
-                        className={`mt-1 flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-gray-700`}
-                      >
-                        <span className="text-xs md:text-sm font-medium">
-                          {translations.detectedLocation[language]}:
-                        </span>
-                        <span className="text-xs md:text-sm">{cityName}</span>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-
-                {locationStatus === "error" && (
-                  <motion.div
-                    className={`flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-red-600`}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <AlertCircle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-                    <span className="text-sm md:text-base">{translations.locationError[language]}</span>
-                  </motion.div>
-                )}
-
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.9 }}
-                >
-                  <Button
-                    onClick={handleEmergencyRequest}
-                    className="w-full bg-red-600 py-4 md:py-6 lg:py-8 text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group"
-                    aria-label="Request emergency ambulance"
-                    disabled={locationStatus === "loading"}
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      {translations.requestAmbulance[language]}
-                      <motion.div
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}
-                      >
-                        <ArrowRight className="h-5 w-5 md:h-6 md:w-6" />
-                      </motion.div>
-                    </span>
-                    <span className="absolute inset-0 bg-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
-                  </Button>
-                </motion.div>
-                <motion.p
-                  className="text-center text-sm md:text-base lg:text-lg text-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                >
-                  {translations.emergencyCall[language]}
-                </motion.p>
               </div>
             </motion.div>
           </div>
