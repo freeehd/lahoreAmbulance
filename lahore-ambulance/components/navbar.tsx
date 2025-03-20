@@ -57,7 +57,7 @@ export default function Navbar() {
     boxShadow: scrolled ? `0 ${4 + scrollProgress * 6}px ${10 + scrollProgress * 10}px rgba(0, 0, 0, 0.05)` : "none",
     // Add a minimum width to prevent the pill from becoming too narrow on mobile
     minWidth: scrolled ? "min(85%, 300px)" : "100%",
-  }
+  } 
 
   const logoContainerWidth = scrolled ? "2px" : "50px"
   const logoScale = 1 + scrollProgress * 0.5
