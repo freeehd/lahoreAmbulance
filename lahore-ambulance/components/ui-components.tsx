@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Phone, MapPin, AlertCircle, ArrowRight, User, Users, Ambulance } from "lucide-react"
+import { Phone, MapPin, AlertCircle, ArrowRight, User, Users, Ambulance } from 'lucide-react'
 
 // Service card component
 export function ServiceCard({ title, description, language }) {
@@ -20,11 +20,13 @@ export function ServiceCard({ title, description, language }) {
           <Ambulance className="h-5 w-5" />
         </div>
         <div className={`text-center sm:text-left ${language === "ur" ? "sm:text-right" : ""}`}>
-          <h3 className={`text-lg md:text-xl font-bold text-gray-900 ${language === "ur" ? "font-urdu" : ""}`}>
+          <h3 
+            className={`text-lg md:text-xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.6]" : ""}`}
+          >
             {title}
           </h3>
-          <p
-            className={`mt-2 md:mt-4 text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}
+          <p 
+            className={`mt-2 md:mt-4 text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
           >
             {description}
           </p>
@@ -46,9 +48,13 @@ export function FeatureCard({ title, description, language }) {
       transition={{ type: "spring", stiffness: 100 }}
       dir={language === "ur" ? "rtl" : "ltr"}
     >
-      <h3 className={`text-lg md:text-xl font-bold text-gray-900 ${language === "ur" ? "font-urdu" : ""}`}>{title}</h3>
-      <p
-        className={`mt-1 md:mt-2 text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}
+      <h3 
+        className={`text-lg md:text-xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.6]" : ""}`}
+      >
+        {title}
+      </h3>
+      <p 
+        className={`mt-1 md:mt-2 text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
       >
         {description}
       </p>
@@ -74,9 +80,8 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
       >
         <Button
           onClick={onEmergencyRequest}
-          className={`w-full bg-red-600 py-6 sm:py-6 md:py-6 lg:py-8 text-lg sm:text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group ${language === "ur" ? "font-urdu" : ""}`}
+          className={`w-full bg-red-600 py-3 sm:py-4 md:py-6 lg:py-8 text-lg sm:text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group ${language === "ur" ? "font-urdu leading-[1.6]" : ""}`}
           aria-label="Request emergency ambulance"
-          dir={language === "ur" ? "rtl" : "ltr"}
         >
           <span className="relative z-10 flex items-center justify-center gap-2">
             {translations.requestAmbulance[language]}
@@ -88,11 +93,10 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
         </Button>
       </motion.div>
       <motion.p
-        className={`text-center text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}
+        className={`text-center text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        dir={language === "ur" ? "rtl" : "ltr"}
       >
         {translations.emergencyCall[language]}
       </motion.p>
@@ -102,19 +106,19 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
 
 export function BookingTypeForm({ onBookingTypeSelection, translations, language }) {
   return (
-    <motion.div
-      className="space-y-4 md:space-y-6"
-      initial={{ opacity: 0, y: 10 }}
+    <motion.div 
+      className="space-y-4 md:space-y-6" 
+      initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }}
       dir={language === "ur" ? "rtl" : "ltr"}
     >
-      <h3
-        className={`text-lg md:text-xl font-bold text-center ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}
+      <h3 
+        className={`text-lg md:text-xl font-bold text-center ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
       >
         {translations.bookingTypeQuestion[language]}
       </h3>
-      <p
-        className={`text-sm md:text-base text-gray-600 text-center ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}
+      <p 
+        className={`text-sm md:text-base text-gray-600 text-center ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
       >
         {translations.bookingTypeDescription[language]}
       </p>
@@ -152,7 +156,10 @@ export function LocationForm({
   language,
 }) {
   return (
-    <div className="space-y-4 md:space-y-6" dir={language === "ur" ? "rtl" : "ltr"}>
+    <div 
+      className="space-y-4 md:space-y-6" 
+      dir={language === "ur" ? "rtl" : "ltr"}
+    >
       {/* Location status indicators */}
       {locationStatus === "loading" && (
         <motion.div
@@ -161,7 +168,7 @@ export function LocationForm({
           animate={{ opacity: 1 }}
         >
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-          <span className={`text-sm md:text-base ${language === "ur" ? "font-urdu" : ""}`}>
+          <span className={`text-sm md:text-base ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}>
             {translations.gettingLocation[language]}
           </span>
         </motion.div>
@@ -175,7 +182,7 @@ export function LocationForm({
         >
           <div className={`flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"}`}>
             <MapPin className="h-4 w-4 md:h-5 md:w-5" />
-            <span className={`text-sm md:text-base ${language === "ur" ? "font-urdu" : ""}`}>
+            <span className={`text-sm md:text-base ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}>
               {translations.locationSuccess[language]}
             </span>
           </div>
@@ -183,7 +190,7 @@ export function LocationForm({
             <div
               className={`mt-1 flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-gray-700`}
             >
-              <span className={`text-xs md:text-sm font-medium ${language === "ur" ? "font-urdu" : ""}`}>
+              <span className={`text-xs md:text-sm font-medium ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}>
                 {translations.detectedLocation[language]}:
               </span>
               <span className="text-xs md:text-sm">{cityName}</span>
@@ -199,7 +206,7 @@ export function LocationForm({
           animate={{ opacity: 1, y: 0 }}
         >
           <AlertCircle className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
-          <span className={`text-sm md:text-base ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}>
+          <span className={`text-sm md:text-base ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}>
             {translations.locationError[language]}
           </span>
         </motion.div>
@@ -252,10 +259,14 @@ export function CompletionForm({ translations, language }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </motion.div>
-      <h3 className={`text-xl md:text-2xl font-bold text-gray-900 ${language === "ur" ? "font-urdu" : ""}`}>
+      <h3 
+        className={`text-xl md:text-2xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
+      >
         {translations.requestSent[language]}
       </h3>
-      <p className={`text-base md:text-lg text-gray-700 ${language === "ur" ? "font-urdu leading-relaxed" : ""}`}>
+      <p 
+        className={`text-base md:text-lg text-gray-700 ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
+      >
         {translations.requestSentDesc[language]}
       </p>
       <div className="pt-2">
@@ -271,4 +282,3 @@ export function CompletionForm({ translations, language }) {
     </motion.div>
   )
 }
-

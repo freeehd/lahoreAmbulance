@@ -293,7 +293,7 @@ export function useLocationService() {
       console.log("Message created:", message)
 
       // Format the phone number (remove + if present)
-      const phoneNumber = "923185122832" // +923185122832 without the +
+      const phoneNumber = "923369111122" // +923185122832 without the +
 
       // Create the WhatsApp URL with the encoded message
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`
