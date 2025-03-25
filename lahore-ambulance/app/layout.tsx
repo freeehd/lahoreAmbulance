@@ -1,11 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Noto_Nastaliq_Urdu} from "next/font/google"
+import {Inter} from "next/font/google"
 import "./globals.css"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 
-const inter = Noto_Nastaliq_Urdu({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Lahore Ambulance Service",

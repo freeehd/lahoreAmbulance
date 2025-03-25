@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Phone } from 'lucide-react'
+import { Phone } from "lucide-react"
 import { useLocationService } from "@/components/location-service"
 import {
   ServiceCard,
@@ -209,6 +209,19 @@ export default function Home() {
       en: "Try Again",
       ur: "دوبارہ کوشش کریں",
     },
+    // Added new translations for emergency numbers
+    emergencyNumbers: {
+      en: "Emergency Numbers",
+      ur: "ہنگامی نمبرز",
+    },
+    nationalEmergency: {
+      en: "National Emergency",
+      ur: "قومی ہنگامی",
+    },
+    ambulanceService: {
+      en: "Ambulance Service",
+      ur: "ایمبولینس سروس",
+    },
   }
 
   // Service cards data with translations
@@ -279,6 +292,22 @@ export default function Home() {
         en: "Patient-centered approach with empathy and respect.",
         ur: "ہمدردی اور احترام کے ساتھ مریض پر مرکوز نقطہ نظر۔",
       },
+    },
+  ]
+
+  // Emergency numbers for Pakistan
+  const emergencyNumbers = [
+    {
+      title: { en: "National Emergency", ur: "قومی ہنگامی" },
+      number: "1122",
+    },
+    {
+      title: { en: "Ambulance Service", ur: "ایمبولینس سروس" },
+      number: "115",
+    },
+    {
+      title: { en: "Police", ur: "پولیس" },
+      number: "15",
     },
   ]
 
@@ -355,12 +384,33 @@ export default function Home() {
     }
   }
 
-  // Add a directionality class to the main container based on language
+  // Get appropriate text direction and alignment classes based on language
+  const getDirectionalClasses = (isReverse = false) => {
+    const isUrdu = language === "ur"
+
+    // Base classes that apply to both languages
+    let classes = ""
+
+    // Text alignment classes
+    classes += isUrdu ? " text-right" : " text-left"
+
+    // Flex direction classes (if needed for reverse)
+    if (isReverse) {
+      classes += isUrdu ? " flex-row" : " flex-row-reverse"
+    } else {
+      classes += isUrdu ? " flex-row-reverse" : " flex-row"
+    }
+
+    return classes
+  }
+
+  // Get font classes based on language
+  const getFontClasses = () => {
+    return language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""
+  }
+
   return (
-    <div 
-      className={`min-h-screen bg-[#fffcf2] ${language === "ur" ? "text-right" : ""}`}
-      dir={language === "ur" ? "rtl" : "ltr"}
-    >
+    <div className={`min-h-screen bg-[#fffcf2]`} dir={language === "ur" ? "rtl" : "ltr"}>
       <main>
         <section ref={heroRef} className="relative bg-[#fffcf2] py-8 md:py-16 lg:py-20 overflow-hidden">
           {/* Animated background elements */}
@@ -402,8 +452,8 @@ export default function Home() {
               >
                 {translations.title[language]}
               </motion.h1>
-              <motion.p 
-                className={`mt-4 md:mt-6 text-lg md:text-xl lg:text-2xl text-gray-700 ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`} 
+              <motion.p
+                className={`mt-4 md:mt-6 text-lg md:text-xl lg:text-2xl text-gray-700 ${getFontClasses()}`}
                 variants={itemVariants}
               >
                 {translations.subtitle[language]}
@@ -426,17 +476,15 @@ export default function Home() {
         <section className="border-t border-gray-200 bg-white py-8 md:py-12 lg:py-16">
           <div className="container mx-auto px-4 md:px-6">
             {/* Update the services section heading */}
-            <h2
-              className={`text-center text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
-            >
+            <h2 className={`text-center text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 ${getFontClasses()}`}>
               {translations.services[language]}
             </h2>
             <div className="mt-6 md:mt-8 lg:mt-10 grid gap-4 md:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {services.map((service, index) => (
-                <ServiceCard 
-                  key={index} 
-                  title={service.title[language]} 
-                  description={service.description[language]} 
+                <ServiceCard
+                  key={index}
+                  title={service.title[language]}
+                  description={service.description[language]}
                   language={language}
                 />
               ))}
@@ -448,23 +496,19 @@ export default function Home() {
           <div className="container mx-auto px-4 md:px-6">
             {/* Update the "Why Choose Us" section */}
             <div className="mx-auto max-w-3xl text-center">
-              <h2 
-                className={`text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
-              >
+              <h2 className={`text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 ${getFontClasses()}`}>
                 {translations.whyChooseUs[language]}
               </h2>
-              <p 
-                className={`mt-2 md:mt-4 text-base md:text-lg lg:text-xl text-gray-700 ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
-              >
+              <p className={`mt-2 md:mt-4 text-base md:text-lg lg:text-xl text-gray-700 ${getFontClasses()}`}>
                 {translations.safetyPriority[language]}
               </p>
             </div>
             <div className="mt-6 md:mt-8 lg:mt-10 grid gap-4 md:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <FeatureCard 
-                  key={index} 
-                  title={feature.title[language]} 
-                  description={feature.description[language]} 
+                <FeatureCard
+                  key={index}
+                  title={feature.title[language]}
+                  description={feature.description[language]}
                   language={language}
                 />
               ))}
@@ -472,59 +516,49 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-gray-200 bg-white py-8 md:py-12 lg:py-16">
+      
+
+        <section className="border-t border-gray-200 bg-[#fffcf2] py-8 md:py-12 lg:py-16">
           <div className="container mx-auto px-4 md:px-6">
             <div className="mx-auto max-w-3xl">
               {/* Update the "Across Pakistan" section */}
               <div className="mx-auto max-w-3xl">
                 <div>
-                  <h2 
-                    className={`text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
-                  >
+                  <h2 className={`text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 ${getFontClasses()}`}>
                     {translations.acrossPakistan[language]}
                   </h2>
-                  <p 
-                    className={`mt-2 md:mt-4 text-base md:text-lg text-gray-700 ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
-                  >
+                  <p className={`mt-2 md:mt-4 text-base md:text-lg text-gray-700 ${getFontClasses()}`}>
                     {translations.acrossPakistanDesc[language]}
                   </p>
                   <div className="mt-4 md:mt-8">
-                    <h3 
-                      className={`text-lg md:text-xl font-bold text-gray-900 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
-                    >
+                    <h3 className={`text-lg md:text-xl font-bold text-gray-900 ${getFontClasses()}`}>
                       {translations.contactUs[language]}
                     </h3>
                     <motion.div
-                      className={`mt-2 md:mt-4 flex items-center gap-2 md:gap-3 ${language === "ur" ? "flex-row-reverse" : ""}`}
+                      className={`mt-2 md:mt-4 flex items-center gap-2 md:gap-3 ${getDirectionalClasses()}`}
                       whileHover={{ scale: 1.03 }}
                       transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     >
                       <Phone className="h-6 w-6 md:h-8 md:w:8 text-red-600" />
-                      <div>
+                      <div className={language === "ur" ? "text-right" : "text-left"}>
                         <a
                           href="tel:+923369111122"
                           className="text-lg md:text-xl font-bold text-red-600 hover:underline flex items-center gap-1"
                           dir="ltr" // Keep phone number in LTR direction
                         >
-                          0336 911 1122
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="ml-1"
-                          >
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                          </svg>
+                          {language === "ur" ? (
+                            <>
+                            
+                              0336 911 1122
+                            </>
+                          ) : (
+                            <>
+                              0336 911 1122
+                              
+                            </>
+                          )}
                         </a>
-                        <p 
-                          className={`text-base md:text-lg text-gray-700 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
-                        >
+                        <p className={`text-base md:text-lg text-gray-700 ${getFontClasses()}`}>
                           {translations.available[language]}
                         </p>
                       </div>
@@ -539,3 +573,4 @@ export default function Home() {
     </div>
   )
 }
+

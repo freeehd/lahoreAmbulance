@@ -16,8 +16,7 @@ export function ServiceCard({ title, description, language }) {
       dir={language === "ur" ? "rtl" : "ltr"}
     >
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3">
-        <div className="bg-red-100 p-2 rounded-full text-red-600 mb-2 sm:mb-0">
-          <Ambulance className="h-5 w-5" />
+        <div className="bg-red-500 p-1 rounded-full text-red-600 mb-2 sm:mb-0">
         </div>
         <div className={`text-center sm:text-left ${language === "ur" ? "sm:text-right" : ""}`}>
           <h3 
@@ -66,11 +65,7 @@ export function FeatureCard({ title, description, language }) {
 export function InitialBookingForm({ onEmergencyRequest, translations, language }) {
   return (
     <>
-      <div className="flex justify-center mb-4">
-        <div className="bg-red-100 p-3 rounded-full">
-          <Ambulance className="h-6 w-6 sm:h-8 sm:w-8 text-red-600" />
-        </div>
-      </div>
+     
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -80,10 +75,10 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
       >
         <Button
           onClick={onEmergencyRequest}
-          className={`w-full bg-red-600 py-3 sm:py-4 md:py-6 lg:py-8 text-lg sm:text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group ${language === "ur" ? "font-urdu leading-[1.6]" : ""}`}
+          className={`w-full bg-red-600 py-5 sm:py-5 md:py-6 lg:py-8 text-lg sm:text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group ${language === "ur" ? "font-urdu leading-[1.6]" : ""}`}
           aria-label="Request emergency ambulance"
         >
-          <span className="relative z-10 flex items-center justify-center gap-2">
+          <span className="relative z-10  flex items-center justify-center gap-2">
             {translations.requestAmbulance[language]}
             <motion.div animate={{ x: [0, 5, 0] }} transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}>
               <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
