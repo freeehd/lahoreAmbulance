@@ -1,20 +1,29 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
 
+// Define types
+type LocationStatus = "idle" | "loading" | "success" | "error";
+type LanguageType = "en" | "ur";
+
+interface LocationData {
+  latitude: number;
+  longitude: number;
+}
+
 // Location service to handle all geolocation functionality
 export function useLocationService() {
-  const [userLocation, setUserLocation] = useState(null)
-  const [locationStatus, setLocationStatus] = useState("idle") // idle, loading, success, error
-  const [cityName, setCityName] = useState("")
+  const [userLocation, setUserLocation] = useState<LocationData | null>(null)
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle") // idle, loading, success, error
+  const [cityName, setCityName] = useState<string>("")
   const [permissionRetries, setPermissionRetries] = useState(0)
   const [isProcessingLocation, setIsProcessingLocation] = useState(false)
-  const [debugInfo, setDebugInfo] = useState("")
+  const [debugInfo, setDebugInfo] = useState<string>("")
 
   const pendingMessageRef = useRef(false)
-  const permissionTimeoutRef = useRef(null)
+  const permissionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Get city name from coordinates using reverse geocoding
-  const getCityFromCoordinates = async (latitude, longitude) => {
+  const getCityFromCoordinates = async (latitude: number, longitude: number) => {
     try {
       // Set a timeout for the fetch request
       const controller = new AbortController()
@@ -70,7 +79,7 @@ export function useLocationService() {
   }
 
   // Request location with robust error handling and permission management
-  const requestLocation = (language) => {
+  const requestLocation = (language: LanguageType) => {
     console.log("Requesting location...")
 
     // Clear any existing timeout
@@ -188,7 +197,7 @@ export function useLocationService() {
               break
             default:
               errorMessage =
-                "آپ ک�� مقام حاصل کرتے وقت ایک نامعلوم خرابی پیش آئی۔ براہ کرم دوبارہ کوشش کریں یا براہ راست ہنگامی خدمات کو کال کریں۔"
+                "آپ ک مقام حاصل کرتے وقت ایک نامعلوم خرابی پیش آئی۔ براہ کرم دوبارہ کوشش کریں یا براہ راست ہنگامی خدمات کو کال کریں۔"
           }
         }
 
@@ -200,7 +209,7 @@ export function useLocationService() {
   }
 
   // Handle location request
-  const handleLocationRequest = async (language) => {
+  const handleLocationRequest = async (language: LanguageType) => {
     console.log("Location request initiated")
 
     // Prevent multiple simultaneous requests
@@ -248,7 +257,7 @@ export function useLocationService() {
   }
 
   // Create message for WhatsApp
-  const createWhatsAppMessage = (location, city, type, lang) => {
+  const createWhatsAppMessage = (location: LocationData, city: string, type: string, lang: LanguageType) => {
     let message = ""
 
     if (type === "self") {
@@ -281,7 +290,7 @@ export function useLocationService() {
   }
 
   // Send WhatsApp message with location
-  const sendWhatsAppMessage = (location, city, bookingType, language) => {
+  const sendWhatsAppMessage = (location: LocationData, city: string, bookingType: string, language: LanguageType) => {
     try {
       console.log("sendWhatsAppMessage called with:", { location, city, bookingType, language })
       setDebugInfo(

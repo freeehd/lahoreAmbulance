@@ -1,10 +1,52 @@
 "use client"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Phone, MapPin, AlertCircle, ArrowRight, User, Users, Ambulance } from 'lucide-react'
+import { Phone, MapPin, AlertCircle, ArrowRight, Ambulance, MessageCircle } from 'lucide-react'
+
+// Define types for component props
+type LanguageType = "en" | "ur";
+
+interface TranslationMap {
+  [key: string]: {
+    [lang in LanguageType]: string;
+  };
+}
+
+interface ServiceCardProps {
+  title: string;
+  description: string;
+  language: LanguageType;
+}
+
+interface FeatureCardProps {
+  title: string;
+  description: string;
+  language: LanguageType;
+}
+
+interface InitialBookingFormProps {
+  onEmergencyRequest: () => void;
+  translations: TranslationMap;
+  language: LanguageType;
+}
+
+interface LocationFormProps {
+  locationStatus: "loading" | "success" | "error";
+  cityName: string | null;
+  onRetry: () => void;
+  isProcessingLocation: boolean;
+  debugInfo: string | null;
+  translations: TranslationMap;
+  language: LanguageType;
+}
+
+interface CompletionFormProps {
+  translations: TranslationMap;
+  language: LanguageType;
+}
 
 // Service card component
-export function ServiceCard({ title, description, language }) {
+export function ServiceCard({ title, description, language }: ServiceCardProps) {
   return (
     <motion.div
       className="rounded-lg border-2 border-gray-200 bg-white p-4 md:p-6 shadow-md transition-all hover:shadow-lg h-full"
@@ -36,7 +78,7 @@ export function ServiceCard({ title, description, language }) {
 }
 
 // Feature card component
-export function FeatureCard({ title, description, language }) {
+export function FeatureCard({ title, description, language }: FeatureCardProps) {
   return (
     <motion.div
       className="rounded-lg border-2 border-gray-200 bg-white p-4 md:p-6 shadow-md h-full"
@@ -62,10 +104,9 @@ export function FeatureCard({ title, description, language }) {
 }
 
 // Booking form components
-export function InitialBookingForm({ onEmergencyRequest, translations, language }) {
+export function InitialBookingForm({ onEmergencyRequest, translations, language }: InitialBookingFormProps) {
   return (
     <>
-     
       <motion.div
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -78,7 +119,8 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
           className={`w-full bg-red-600 py-5 sm:py-5 md:py-6 lg:py-8 text-lg sm:text-xl md:text-2xl font-bold hover:bg-red-700 focus:ring-4 focus:ring-red-300 relative overflow-hidden group ${language === "ur" ? "font-urdu leading-[1.6]" : ""}`}
           aria-label="Request emergency ambulance"
         >
-          <span className="relative z-10  flex items-center justify-center gap-2">
+          <span className="relative z-10 flex items-center justify-center gap-2">
+            <Ambulance className="h-5 w-5 md:h-6 md:w-6" />
             {translations.requestAmbulance[language]}
             <motion.div animate={{ x: [0, 5, 0] }} transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5 }}>
               <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
@@ -87,8 +129,19 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
           <span className="absolute inset-0 bg-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
         </Button>
       </motion.div>
+      <motion.div
+        className="mt-2 flex justify-center items-center text-green-600"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <MessageCircle className="h-4 w-4 mr-1" />
+        <span className={`text-xs sm:text-sm text-green-600 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}>
+          {translations.viaWhatsApp[language]}
+        </span>
+      </motion.div>
       <motion.p
-        className={`text-center text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
+        className={`text-center text-xs sm:text-sm md:text-base lg:text-lg text-gray-600 mt-3 ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
@@ -96,48 +149,6 @@ export function InitialBookingForm({ onEmergencyRequest, translations, language 
         {translations.emergencyCall[language]}
       </motion.p>
     </>
-  )
-}
-
-export function BookingTypeForm({ onBookingTypeSelection, translations, language }) {
-  return (
-    <motion.div 
-      className="space-y-4 md:space-y-6" 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }}
-      dir={language === "ur" ? "rtl" : "ltr"}
-    >
-      <h3 
-        className={`text-lg md:text-xl font-bold text-center ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}
-      >
-        {translations.bookingTypeQuestion[language]}
-      </h3>
-      <p 
-        className={`text-sm md:text-base text-gray-600 text-center ${language === "ur" ? "font-urdu leading-[1.8] tracking-wide" : ""}`}
-      >
-        {translations.bookingTypeDescription[language]}
-      </p>
-      <div className="grid grid-cols-2 gap-4">
-        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-          <Button
-            onClick={() => onBookingTypeSelection("self")}
-            className={`w-full py-6 md:py-8 bg-red-600 hover:bg-red-700 text-white flex flex-col items-center justify-center gap-2 h-auto ${language === "ur" ? "font-urdu" : ""}`}
-          >
-            <User className="h-6 w-6 md:h-8 md:w-8" />
-            <span className="text-base md:text-lg font-medium text-center">{translations.forSelf[language]}</span>
-          </Button>
-        </motion.div>
-        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-          <Button
-            onClick={() => onBookingTypeSelection("other")}
-            className={`w-full py-6 md:py-8 bg-red-600 hover:bg-red-700 text-white flex flex-col items-center justify-center gap-2 h-auto ${language === "ur" ? "font-urdu" : ""}`}
-          >
-            <Users className="h-6 w-6 md:h-8 md:w-8" />
-            <span className="text-base md:text-lg font-medium text-center">{translations.forOther[language]}</span>
-          </Button>
-        </motion.div>
-      </div>
-    </motion.div>
   )
 }
 
@@ -149,7 +160,7 @@ export function LocationForm({
   debugInfo,
   translations,
   language,
-}) {
+}: LocationFormProps) {
   return (
     <div 
       className="space-y-4 md:space-y-6" 
@@ -191,6 +202,12 @@ export function LocationForm({
               <span className="text-xs md:text-sm">{cityName}</span>
             </div>
           )}
+          <div className={`mt-2 flex items-center ${language === "ur" ? "flex-row-reverse space-x-reverse" : "space-x-2"} text-green-600`}>
+            <MessageCircle className="h-4 w-4" />
+            <span className={`text-xs md:text-sm ${language === "ur" ? "font-urdu leading-[1.8]" : ""}`}>
+              {translations.viaWhatsApp[language]}
+            </span>
+          </div>
         </motion.div>
       )}
 
@@ -230,7 +247,7 @@ export function LocationForm({
   )
 }
 
-export function CompletionForm({ translations, language }) {
+export function CompletionForm({ translations, language }: CompletionFormProps) {
   return (
     <motion.div
       className={`space-y-4 md:space-y-6 text-center`}
@@ -264,7 +281,11 @@ export function CompletionForm({ translations, language }) {
       >
         {translations.requestSentDesc[language]}
       </p>
-      <div className="pt-2">
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-1 text-green-600 mb-2">
+          <MessageCircle className="h-5 w-5" />
+          <span className={`text-sm ${language === "ur" ? "font-urdu" : ""}`}>WhatsApp</span>
+        </div>
         <a
           href="tel:+923369111122"
           className="inline-flex items-center justify-center gap-2 text-white bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-medium transition-colors"

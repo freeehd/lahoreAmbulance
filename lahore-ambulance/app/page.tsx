@@ -1,24 +1,27 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Phone } from "lucide-react"
+import { Phone, ArrowRight, MapPin, Ambulance, MessageCircle } from "lucide-react"
 import { useLocationService } from "@/components/location-service"
 import {
   ServiceCard,
   FeatureCard,
   InitialBookingForm,
-  BookingTypeForm,
   LocationForm,
   CompletionForm,
 } from "@/components/ui-components"
 
-export default function Home() {
-  const [language, setLanguage] = useState("ur") // "en" for English, "ur" for Urdu
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [bookingStep, setBookingStep] = useState("initial") // initial, booking-type, location, complete
-  const [bookingType, setBookingType] = useState("") // "self" or "other"
+// Define types for the component
+type LanguageType = "en" | "ur";
+type BookingStepType = "initial" | "location" | "complete";
+type LocationStatusType = "idle" | "loading" | "success" | "error";
 
-  const heroRef = useRef(null)
+export default function Home() {
+  const [language, setLanguage] = useState<LanguageType>("ur") // "en" for English, "ur" for Urdu
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [bookingStep, setBookingStep] = useState<BookingStepType>("initial")
+
+  const heroRef = useRef<HTMLElement | null>(null)
 
   // Get location service
   const {
@@ -33,7 +36,7 @@ export default function Home() {
 
   // Track mouse position for interactive elements
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handleMouseMove = (e: MouseEvent) => {
       if (heroRef.current) {
         const rect = heroRef.current.getBoundingClientRect()
         setMousePosition({
@@ -51,20 +54,20 @@ export default function Home() {
 
   // Listen for language change events from navbar
   useEffect(() => {
-    const handleLanguageChange = (event) => {
+    const handleLanguageChange = (event: CustomEvent) => {
       setLanguage(event.detail.language)
     }
 
-    window.addEventListener("languageChange", handleLanguageChange)
+    window.addEventListener("languageChange", handleLanguageChange as EventListener)
     return () => {
-      window.removeEventListener("languageChange", handleLanguageChange)
+      window.removeEventListener("languageChange", handleLanguageChange as EventListener)
     }
   }, [])
 
   // Add a backup mechanism to ensure the message is sent if both location and city are available
   useEffect(() => {
-    // Only proceed if we have a pending message and we're booking for self
-    if (bookingType !== "self" || bookingStep !== "location") {
+    // Only proceed if we're in the location step
+    if (bookingStep !== "location") {
       return
     }
 
@@ -73,42 +76,21 @@ export default function Home() {
       console.log("Location and city name available in useEffect, sending message...")
       console.log("Location data:", userLocation)
       console.log("City name:", cityName)
-      console.log("Booking type:", bookingType)
 
       // Send the message
-      const success = sendWhatsAppMessage(userLocation, cityName, bookingType, language)
+      const success = sendWhatsAppMessage(userLocation, cityName, "self", language)
       if (success) {
         setBookingStep("complete")
       }
     }
-  }, [userLocation, cityName, locationStatus, bookingType, language, sendWhatsAppMessage])
+  }, [userLocation, cityName, locationStatus, bookingStep, language, sendWhatsAppMessage])
 
   // Handle the initial emergency request button click
   const handleEmergencyRequest = () => {
     console.log("Emergency request initiated")
-    // Move to the booking type selection step
-    setBookingStep("booking-type")
-  }
-
-  // Handle booking type selection
-  const handleBookingTypeSelection = (type) => {
-    console.log("Booking type selected:", type)
-    setBookingType(type)
-
-    if (type === "self") {
-      // For self booking, proceed with location request
-      setBookingStep("location")
-      handleLocationRequest(language)
-    } else {
-      // For booking for someone else, skip location and send message directly
-      console.log("Booking for someone else, skipping location request")
-      // We need to pass dummy location data for the function to work
-      // but it won't be used in the message
-      const success = sendWhatsAppMessage({ latitude: 0, longitude: 0 }, "", type, language)
-      if (success) {
-        setBookingStep("complete")
-      }
-    }
+    // Move to the location step directly
+    setBookingStep("location")
+    handleLocationRequest(language)
   }
 
   // Translations
@@ -149,25 +131,13 @@ export default function Home() {
       en: "REQUEST AMBULANCE NOW",
       ur: "ابھی ایمبولینس کی درخواست کریں",
     },
+    viaWhatsApp: {
+      en: "via WhatsApp",
+      ur: "via WhatsApp",
+    },
     emergencyCall: {
       en: "For life-threatening emergencies, call 1122 directly",
       ur: "زندگی کو خطرہ لاحق ہونے والی ہنگامی صورتحال کے لیے، براہ راست 1122 پر کال کریں",
-    },
-    bookingTypeQuestion: {
-      en: "Who needs the ambulance?",
-      ur: "ایمبولینس کس کو درکار ہے؟",
-    },
-    forSelf: {
-      en: "For myself",
-      ur: "میرے لیے",
-    },
-    forOther: {
-      en: "For someone else",
-      ur: "کسی اور کے لیے",
-    },
-    bookingTypeDescription: {
-      en: "This helps us determine if we need your location",
-      ur: "یہ ہمیں یہ طے کرنے میں مدد کرتا ہے کہ آیا ہمیں آپ کے مقام کی ضرورت ہے",
     },
     services: {
       en: "Our Services",
@@ -357,18 +327,10 @@ export default function Home() {
             language={language}
           />
         )
-      case "booking-type":
-        return (
-          <BookingTypeForm
-            onBookingTypeSelection={handleBookingTypeSelection}
-            translations={translations}
-            language={language}
-          />
-        )
       case "location":
         return (
           <LocationForm
-            locationStatus={locationStatus}
+            locationStatus={locationStatus as "loading" | "success" | "error"}
             cityName={cityName}
             onRetry={() => handleLocationRequest(language)}
             isProcessingLocation={isProcessingLocation}
